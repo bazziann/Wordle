@@ -16,7 +16,7 @@ def drawTable(workspace, isEnd=False):
     rowSep = "       +" + ("---+" * 5)
     line = 0
     if isEnd:
-        helpText = workspace["info"]
+        helpText = [workspace["info"]]
     else:
         helpText = []
         for line in help:
@@ -67,35 +67,42 @@ def updateKeyboard(workspace, inp):
         for i in range(len(workspace["keyboard"])):
             workspace["keyboard"][i] = workspace["keyboard"][i].replace(char, c + char + r)
 
-def match(workspace, inp):
-    workspace[gotIt] = (workspace[answer] == inp)
+def check(workspace, inp):
+    workspace["gotIt"] = (workspace["answer"] == inp)
     chars_inp = [*inp]
-    workspace[guess] = chars
-    workspace[guessList].add(inp)
-    chars_answer = [*workspace[answer]]
-    #$workspace{match}=[map {$workspace{guess}[$_ ] eq $workspace{answer}[$_ ]?1:0} (0..($wordLength-1)) ]; 
-	#$answer=join("",map {$workspace{match}[$_ ]==1?" ":$workspace{answer}[$_ ]} (0..($wordLength-1)));
-	#$workspace{match}=[map {$workspace{match}[$_ ]==1? $workspace{match}[$_ ]:($answer=~s/$workspace{guess}[$_ ]/ /i?2:0) } (0..($wordLength-1)) ];
-	#$workspace{show} ="| ".join (" | ",map {
-	#	       $colours[$workspace{match}[$_ ]].
-	#	       $workspace{guess}[$_ ].color("reset");
-	#	       }  (0..($wordLength-1)))." |";
+    workspace["guess"] = chars_inp
+    workspace["guessList"].append(inp)
+    chars_answer = [*workspace["answer"]]
+    colored_chars = []
+    for n in range(5):
+        c = chars_inp[n]
+        exp = workspace["answer"][n]
+        if c == exp:
+            col = color("green")
+        elif c in workspace["answer"]:
+            col = color("yellow")
+        else:
+            col = color("reset")
+        colored_chars.append(col + c)
 
-def savescores():
-    for key in scores.keys():
-        print(f"{key} = " + scores[key])
-        
+    workspace["show"] = "| " + " | ".join(colored_chars) + color("reset") + " |"
 
 # Save data is persisted to file
 saves = "scores";   # path to savefile
 scores = {"1":0, "2":0, "3":0, "4":0, "5":0, "6":0, "Wins":0,"Fails":0,"Streak":0,"Longest Streak":0,"gametime":0}
+
+def savescores():
+    fh = open(saves, "w")
+    for key in scores.keys():
+        fh.write(f"{key} = {int(scores[key])}\n")
+    fh.close()
 
 # Read save file
 if os.path.exists(saves):  
     lines = open(saves, "r").read().strip().split("\n")
     for line in lines:  
         values = line.split("=")
-        scores[values[0]] = values[1]
+        scores[values[0]] = int(values[1])
 
 # Read words from dictionary file
 if os.path.exists("words"):
@@ -141,27 +148,30 @@ while True:
         workspace["rows"].append("|" + "   |"*5)
     
     while not workspace["gotIt"]:
+        workspace["goes"] += 1
         drawTable(workspace)
         while True:
-            inp = input(f"   Guess {(workspace['goes'] + 1)}: ")
+            inp = input(f"   Guess {(workspace['goes'])}: ")
             if inp == "Q":
                 exit()
             if isValid(workspace, inp):
                 break
         updateKeyboard(workspace, inp) #color keyboard
         check(workspace, inp) #check for match
-        workspace[rows[workspace[goes]]-1] = workspace[show] #what is workspace[show]
+        workspace["rows"][workspace["goes"]-1] = workspace["show"] 
         workspace["guess"] = "" #reset guess
+
+        if workspace["goes"] == 6:
+            break
     scores["gametime"] = time.time() - startTime
     if workspace["gotIt"]:
-        #workspace["info"] = color("green") + "        ***WELL DONE***" + color("reset") + "   Got it in " + workspace["goes"] + " goes in " + scores["gametime"]" secs"
+        workspace["info"] = color("green") + "        **WELL DONE**" + color("reset") + "   Got it in " + str(workspace["goes"]) + " goes in " + str(scores["gametime"]) + " secs"
         scores["Wins"] += 1
-        workspace["goes"] += 1
         scores["Streak"] += 1
-        if scores["longest Streak"] < scores["Streak"]:
-            scores["longest Streak"] = scores["Streak"]
+        if scores["Longest Streak"] < scores["Streak"]:
+            scores["Longest Streak"] = scores["Streak"]
     else:
-        #workspace["info"] = color("red") = "     Failed!! answer was " ! color("reset") + workspace[answer]    
+        workspace["info"] = color("red") + "     Failed!! answer was " + color("reset") + workspace["answer"]
         scores["Fails"] += 1
         scores["Streak"] = 0
     #my $max=(sort {$a <=> $b}(@scores{1..$maxGuesses}),1)[-1];
@@ -170,5 +180,9 @@ while True:
 	#$workspace{info}=[@{$workspace{info}}," ","   Total Game Time = $scores{gametime} (avg ".
 	#                         sprintf("%.2f", $scores{gametime}/($scores{Wins}+$scores{Fails})).")",
 	#					     "  Longest streak = $scores{'Longest Streak'}  Current Streak = $scores{Streak} "];
-    drawTable("end")
+    drawTable(workspace, True)
     savescores()
+
+    inp = input(f"   Want another game? Y/N: ")
+    if inp == "N":
+        break
