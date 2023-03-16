@@ -105,7 +105,6 @@ else:
 
 validWords = set()
 words = open(source, "r").read().strip().split("\n")
-print(words)
 for word in words:
     if re.search(r"^[a-z]{5}$", word):
         validWords.add(word)
