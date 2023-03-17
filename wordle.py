@@ -83,9 +83,9 @@ def check(workspace, inp):
             col = color("yellow")
         else:
             col = color("reset")
-        colored_chars.append(col + c)
+        colored_chars.append(col + c + color("reset"))
 
-    workspace["show"] = "| " + " | ".join(colored_chars) + color("reset") + " |"
+    workspace["show"] = "| " + " | ".join(colored_chars) + " |"
 
 # Save data is persisted to file
 saves = "scores";   # path to savefile
@@ -136,9 +136,9 @@ while True:
         "gotIt": False,
         "guessList":[],
         "keyboard": [
-            "    Q  W  E  R  T  Y  U  I  O  P ",
-            "      A  S  D  F  G  H  J  K  L ",
-            "        Z  X  C  V  B  N  M ",
+            "    q  w  e  r  t  y  u  i  o  p ",
+            "      a  s  d  f  g  h  j  k  l ",
+            "        z  x  c  v  b  n  m ",
         ],
         "answer": random.choice(tuple(validWords)),
         "info": "",
@@ -174,12 +174,7 @@ while True:
         workspace["info"] = color("red") + "     Failed!! answer was " + color("reset") + workspace["answer"]
         scores["Fails"] += 1
         scores["Streak"] = 0
-    #my $max=(sort {$a <=> $b}(@scores{1..$maxGuesses}),1)[-1];
-	#$workspace{info}=[@{$workspace{info}},"   Statistics (".int(100*$scores{Wins}/($scores{Wins}+$scores{Fails}))."%) $scores{Wins} Win".($scores{Wins}==1?"":"s")." and $scores{Fails} Fail".($scores{Fails}==1?"":"s")]; 
-	#$workspace{info}=[@{$workspace{info}},"   $_ ".color("on_green").(" " x(20*$scores{$_}/$max)).color("on_blue").$scores{$_}.color("reset")] foreach (1..$maxGuesses);
-	#$workspace{info}=[@{$workspace{info}}," ","   Total Game Time = $scores{gametime} (avg ".
-	#                         sprintf("%.2f", $scores{gametime}/($scores{Wins}+$scores{Fails})).")",
-	#					     "  Longest streak = $scores{'Longest Streak'}  Current Streak = $scores{Streak} "];
+
     drawTable(workspace, True)
     savescores()
 
